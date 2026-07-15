@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Lista Spesa</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght=700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0f0f1a;--surface:#1a1a2e;--surface2:#22223b;
+      --accent:#8A2BE2;--accent2:#f4a261;--text:#f1faee;
+      --muted:#8d99ae;--green:#2a9d8f;--radius:14px;
+      --shadow:0 8px 32px rgba(0,0,0,.45);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{overflow-x:hidden;width:100%;max-width:100%}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:24px 16px 60px}
+    #login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+    #login-screen h1{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,6vw,2.8rem);font-weight:800;background:linear-gradient(135deg,var(--text) 40%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+    #login-screen>p{color:var(--muted);margin-bottom:40px;font-size:.95rem}
+    .login-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:40px 32px;text-align:center;max-width:360px;width:100%}
+    .login-card h2{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:8px}
+    .login-card p{color:var(--muted);font-size:.88rem;margin-bottom:28px}
+    .btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px;background:#fff;color:#333;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;cursor:pointer;transition:opacity .2s}
+    .btn-google:hover{opacity:.9}
+    .btn-google img{width:20px;height:20px}
+    #login-error{margin-top:16px;color:var(--accent);font-size:.85rem;min-height:20px}
+    #app-screen{display:none}
+    header{text-align:center;margin-bottom:32px}
+    header h1{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,6vw,2.8rem);font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--text) 40%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    header p{color:var(--muted);font-size:.9rem;margin-top:6px}
+    .user-bar{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;font-size:.85rem;color:var(--muted)}
+    .user-bar img{width:28px;height:28px;border-radius:50%;border:2px solid var(--accent2)}
+    .btn-logout{background:none;border:1.5px solid var(--muted);color:var(--muted);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer;transition:border-color .2s,color .2s}
+    .btn-logout:hover{border-color:var(--accent);color:var(--accent)}
+    .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;max-width:600px;margin:0 auto 28px;width:100%}
+    .card h2{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);margin-bottom:18px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:.78rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+    .field input,.field select{width:100%;background:var(--surface2);border:1.5px solid transparent;border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;transition:border-color .2s;outline:none;appearance:none}
+    .field select option{background:var(--surface2)}
+    .field input:focus,.field select:focus{border-color:var(--accent2)}
+    .field input::placeholder{color:var(--muted)}
+    .btn-add{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:1px;cursor:pointer;margin-top:6px;transition:opacity .2s,transform .1s}
+    .btn-add:hover{opacity:.88}
+    .btn-add:active{transform:scale(.98)}
+    .btn-add:disabled{opacity:.5;cursor:not-allowed}
+    #status{max-width:600px;margin:0 auto 14px;text-align:center;font-size:.88rem;min-height:20px;color:var(--accent2)}
+    .cat-header td{background:var(--surface2);color:var(--accent2);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;padding:8px 12px}
+    
+    /* MODIFICHE FIX RESPONSIVE PER SMARTPHONE */
+    .table-wrap{width:100%;overflow-x:hidden;max-width:100%}
+    table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:.9rem}
+    thead tr{border-bottom:2px solid var(--surface2)}
+    thead th{padding:10px 8px;text-align:left;font-family:'Syne',sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+    
+    /* Configurazione larghezza colonne */
+    thead th:nth-child(1), tbody td:nth-child(1) { width: 40%; } /* Nome prodotto */
+    thead th:nth-child(2), tbody td:nth-child(2) { width: 15%; text-align: center; } /* Quantità */
+    thead th:nth-child(3), tbody td:nth-child(3) { width: 25%; } /* Ubicazione */
+    thead th:nth-child(4), tbody td:nth-child(4) { width: 20%; text-align: right; } /* Azioni */
+
+    tbody tr{border-bottom:1px solid var(--surface2);transition:background .15s}
+    tbody tr:hover{background:var(--surface2)}
+    tbody td{padding:12px 8px;vertical-align:middle;word-wrap:break-word;overflow-wrap:break-word;white-space:normal}
+    
+    .badge-qty{display:inline-block;background:var(--accent2);color:#1a1a2e;font-weight:700;font-size:.8rem;border-radius:20px;padding:2px 8px}
+    .badge-loc{display:inline-block;background:var(--surface2);color:var(--muted);font-size:.8rem;border-radius:6px;padding:3px 7px;max-width:100%;word-wrap:break-word}
+    
+    tr.acquistato td{opacity:.45}
+    tr.acquistato .nome-prodotto{text-decoration:line-through;color:var(--muted)}
+    tr.acquistato .badge-qty{background:var(--muted)}
+    
+    .btn-check{background:none;border:1.5px solid var(--green);color:var(--green);border-radius:6px;padding:5px 8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+    .btn-check:hover{background:var(--green);color:#fff}
+    tr.acquistato .btn-check{border-color:var(--muted);color:var(--muted)}
+    
+    .btn-del{background:none;border:1.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:5px 8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+    .btn-del:hover{background:var(--accent);color:#fff}
+    
+    .empty-row td{text-align:center;color:var(--muted);padding:28px;font-style:italic}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--muted);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .counter{text-align:right;font-size:.8rem;color:var(--muted);margin-bottom:12px}
+    .counter span{color:var(--accent2);font-weight:700}
+    #install-banner{display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1.5px solid var(--accent2);border-radius:var(--radius);padding:14px 20px;box-shadow:var(--shadow);align-items:center;gap:14px;max-width:340px;width:calc(100% - 32px);z-index:999}
+    #install-banner p{font-size:.88rem;flex:1}
+    #install-banner button{background:var(--accent2);color:#1a1a2e;border:none;border-radius:6px;padding:7px 14px;font-weight:700;cursor:pointer;font-size:.85rem;white-space:nowrap}
+    #dismiss-install{background:none!important;color:var(--muted)!important;padding:0!important;font-size:1.2rem!important}
+    
+    /* Stile personalizzato per la selezione lingua nella testata */
+    .lang-selector-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .lang-select {
+      background: var(--surface2);
+      border: 1px solid var(--accent2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      color: var(--text);
+      font-size: 0.8rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      outline: none;
+    }
+
+    @media(max-width:480px){
+      body{padding:16px 8px 60px}
+      .card{padding:12px 8px}
+      thead th,tbody td{padding:8px 4px;font-size:.78rem}
+      .btn-check,.btn-del{display:inline-block;width:auto;margin:2px;padding:4px 6px;font-size:.75rem}
+      thead th:nth-child(1), tbody td:nth-child(1) { width: 38%; }
+      thead th:nth-child(2), tbody td:nth-child(2) { width: 14%; }
+      thead th:nth-child(3), tbody td:nth-child(3) { width: 24%; }
+      thead th:nth-child(4), tbody td:nth-child(4) { width: 24%; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1 data-i18n="titolo_principale">🛒 Lista Spesa</h1>
+  <p data-i18n="sottotitolo">Famiglia · sincronizzata in tempo reale</p>
+  <div class="login-card">
+    <h2 data-i18n="benvenuto">Benvenuto!</h2>
+    <p data-i18n="descrizione_login">Accedi con il tuo account Google per entrare nella lista di famiglia</p>
+    <button class="btn-google" onclick="loginGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+      <span data-i18n="btn_login_google">Accedi con Google</span>
+    </button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <header>
+    <h1 data-i18n="titolo_principale">🛒 Lista Spesa</h1>
+    <p data-i18n="sottotitolo">Famiglia · sincronizzata in tempo reale</p>
+    
+    <div class="lang-selector-wrap">
+      <select id="language-select" class="lang-select">
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="pl">🇵🇱 Polski</option>
+      </select>
+    </div>
+
+    <div class="user-bar">
+      <img id="user-photo" src="" alt="" style="display:none" />
+      <span id="user-name"></span>
+      <button class="btn-logout" onclick="logout()" data-i18n="esci">Esci</button>
+    </div>
+  </header>
+
+<div class="card">
+    <h2 data-i18n="nuovo_prodotto">➕ Nuovo prodotto</h2>
+    <div class="field"><label for="nome" data-i18n="label_nome">Nome prodotto</label><input id="nome" type="text" placeholder="es. Latte, Pasta…" autocomplete="off" /></div>
+    <div class="field"><label for="quantita" data-i18n="label_quantita">Quantità</label><input id="quantita" type="number" min="1" placeholder="1" /></div>
+    <div class="field">
+      <label for="ubicazione" data-i18n="label_ubicazione">📍 Dove lo compri / Dove si trova?</label>
+      <select id="ubicazione" required>
+        <option value="" disabled selected data-i18n="scegli_posto">Scegli un posto...</option>
+        <optgroup label="Supermercati" data-i18n-label="opt_supermercati">
+          <option value="Aldi">Aldi</option>
+          <option value="Bennet">Bennet</option>
+          <option value="Carrefour">Carrefour</option>
+          <option value="Conad">Conad</option>
+          <option value="Coop">Coop</option>
+          <option value="Eurospin">Eurospin</option>
+          <option value="Esselunga">Esselunga</option>
+          <option value="Famila">Famila</option>
+          <option value="Gulliver">Gulliver</option>
+          <option value="Ipercoop">Ipercoop</option>
+          <option value="Lidl">Lidl</option>
+          <option value="MD">MD</option>
+          <option value="Tigros">Tigros</option>
+        </optgroup>
+        <optgroup label="In Casa" data-i18n-label="opt_incasa">
+          <option value="Casa" data-i18n="posto_casa">Casa (Generico)</option>
+          <option value="Dispensa" data-i18n="posto_dispensa">Dispensa</option>
+          <option value="Frigo" data-i18n="posto_frigo">Frigo</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="field">
+      <label for="categoria" data-i18n="label_categoria">Categoria</label>
+      <select id="categoria">
+        
+        <optgroup label="🥦 Frutta e Verdura" data-i18n-label="group_frutta_verdura">
+          <option value="Frutta e Verdura" data-i18n="cat_frutta_generico">🥦 Frutta e Verdura (Generico)</option>
+          <option value="Frutta e Verdura" data-i18n="cat_pomodoro">🍅 Pomodori</option>
+          <option value="Frutta e Verdura" data-i18n="cat_carota">🥕 Carote</option>
+          <option value="Frutta e Verdura" data-i18n="cat_banana">🍌 Banane</option>
+          <option value="Frutta e Verdura" data-i18n="cat_mela_rossa">🍎 Mele rosse</option>
+          <option value="Frutta e Verdura" data-i18n="cat_mela_verde">🍏 Mele verdi</option>
+          <option value="Frutta e Verdura" data-i18n="cat_fragola">🍓 Fragole</option>
+          <option value="Frutta e Verdura" data-i18n="cat_limone">🍋 Limone</option>
+          <option value="Frutta e Verdura" data-i18n="cat_patata">🥔 Patate</option>
+          <option value="Frutta e Verdura" data-i18n="cat_insalata">🥗 Insalata / Lattuga</option>
+          <option value="Frutta e Verdura" data-i18n="cat_cipolla">🧅 Cipolla</option>
+          <option value="Frutta e Verdura" data-i18n="cat_aglio">🧄 Aglio</option>
+          <option value="Frutta e Verdura" data-i18n="cat_arancia">🍊 Arancia</option>
+          <option value="Frutta e Verdura" data-i18n="cat_pesca">🍑 Pesche</option>
+          <option value="Frutta e Verdura" data-i18n="cat_anguria">🍉 Anguria</option>
+          <option value="Frutta e Verdura" data-i18n="cat_broccolo">🥦 Broccolo</option>
+          <option value="Frutta e Verdura" data-i18n="cat_fungo">🍄 Fungo</option>
+          <option value="Frutta e Verdura" data-i18n="cat_avocado">🥑 Avocado</option>
+          <option value="Frutta e Verdura" data-i18n="cat_uva">🍇 Uva</option>
+          <option value="Frutta e Verdura" data-i18n="cat_ciliegia">🍒 Ciliege</option>
+        </optgroup>
+
+        <optgroup label="🥩 Carne e Pesce" data-i18n-label="group_carne_pesce">
+          <option value="Carne e Pesce" data-i18n="cat_carne_pesce_generico">🥩 Carne e Pesce (Generico)</option>
+          <option value="Carne e Pesce" data-i18n="cat_pollo">🍗 Coscia di pollo</option>
+          <option value="Carne e Pesce" data-i18n="cat_bistecca">🥩 Bistecca di manzo</option>
+          <option value="Carne e Pesce" data-i18n="cat_bacon">🥓 Bacon / Pancetta</option>
+          <option value="Carne e Pesce" data-i18n="cat_pesce_fresco">🐟 Pesce fresco</option>
+          <option value="Carne e Pesce" data-i18n="cat_gamberetti">🍤 Gamberetti</option>
+          <option value="Carne e Pesce" data-i18n="cat_hamburger">🍔 Hamburger</option>
+          <option value="Carne e Pesce" data-i18n="cat_salsiccia">🌭 Salsiccia</option>
+          <option value="Carne e Pesce" data-i18n="cat_sushi">🍣 Sushi</option>
+          <option value="Carne e Pesce" data-i18n="cat_costine">🍖 Costine</option>
+          <option value="Carne e Pesce" data-i18n="cat_tonno">🥫 Tonno in scatola</option>
+        </optgroup>
+
+        <optgroup label="🧀 Latticini e Uova" data-i18n-label="group_latticini_uova">
+          <option value="Latticini" data-i18n="cat_latticini_generico">🧀 Latticini (Generico)</option>
+          <option value="Latticini" data-i18n="cat_latte">🥛 Latte</option>
+          <option value="Latticini" data-i18n="cat_burro">🧈 Burro</option>
+          <option value="Latticini" data-i18n="cat_uova">🥚 Uova</option>
+          <option value="Latticini" data-i18n="cat_gelato">🍦 Gelato</option>
+          <option value="Latticini" data-i18n="cat_parmigiano">🧀 Formaggio grattugiato</option>
+          <option value="Latticini" data-i18n="cat_mozzarella">🥛 Mozzarella</option>
+          <option value="Latticini" data-i18n="cat_yogurt">🍧 Yogurt</option>
+          <option value="Latticini" data-i18n="cat_panna">🧁 Panna</option>
+        </optgroup>
+
+        <optgroup label="🍞 Pane, Pasta e Dispensa" data-i18n-label="group_pane_pasta_dispensa">
+          <option value="Pane e Dolci" data-i18n="cat_pane_dolci_generico">🍞 Pane e Dolci (Generico)</option>
+          <option value="Pane e Dolci" data-i18n="cat_baguette">🥖 Baguette / Filoncino</option>
+          <option value="Pane e Dolci" data-i18n="cat_croissant">🥐 Croissant / Cornetto</option>
+          <option value="Pane e Dolci" data-i18n="cat_pasta">🍝 Pasta / Spaghetti</option>
+          <option value="Pane e Dolci" data-i18n="cat_riso">🍚 Riso</option>
+          <option value="Pane e Dolci" data-i18n="cat_pizza">🍕 Pizza</option>
+          <option value="Pane e Dolci" data-i18n="cat_biscotti">🍪 Biscotti</option>
+          <option value="Pane e Dolci" data-i18n="cat_torta">🍰 Fetta di torta</option>
+          <option value="Pane e Dolci" data-i18n="cat_ciambella">🍩 Ciambella</option>
+          <option value="Pane e Dolci" data-i18n="cat_pane_cassetta">🍞 Pane in cassetta</option>
+          <option value="Pane e Dolci" data-i18n="cat_cereali">🥣 Cereali</option>
+          <option value="Pane e Dolci" data-i18n="cat_sale">🧂 Sale</option>
+          <option value="Pane e Dolci" data-i18n="cat_miele">🍯 Miele</option>
+          <option value="Pane e Dolci" data-i18n="cat_zucchero">🪵 Zucchero</option>
+          <option value="Pane e Dolci" data-i18n="cat_olio">🍾 Olio d'oliva</option>
+          <option value="Pane e Dolci" data-i18n="cat_pomodoro_passata">🥫 Passata di pomodoro</option>
+          <option value="Pane e Dolci" data-i18n="cat_patatine">🥔 Patatine / Snack</option>
+        </optgroup>
+
+        <optgroup label="🥤 Bevande" data-i18n-label="group_bevande">
+          <option value="Bevande" data-i18n="cat_bevande_generico">🥤 Bevande (Generico)</option>
+          <option value="Bevande" data-i18n="cat_acqua">💧 Acqua minerale</option>
+          <option value="Bevande" data-i18n="cat_caffe">☕ Caffè</option>
+          <option value="Bevande" data-i18n="cat_succo">🧃 Succo / Estathé</option>
+          <option value="Bevande" data-i18n="cat_birra">🍺 Birra</option>
+          <option value="Bevande" data-i18n="cat_vino">🍷 Vino</option>
+          <option value="Bevande" data-i18n="cat_cola">🥤 Coca Cola / Fanta</option>
+          <option value="Bevande" data-i18n="cat_te">🍵 Tè / Infusi</option>
+          <option value="Bevande" data-i18n="cat_spumante">🍾 Spumante</option>
+        </optgroup>
+
+        <optgroup label="🧹 Pulizia Casa" data-i18n-label="group_pulizia_casa">
+          <option value="Pulizia Casa" data-i18n="cat_pulizia_generico">🧹 Pulizia Casa (Generico)</option>
+          <option value="Pulizia Casa" data-i18n="cat_spugna">🧽 Spugna</option>
+          <option value="Pulizia Casa" data-i18n="cat_sapone_piatti">🧼 Sapone piatti</option>
+          <option value="Pulizia Casa" data-i18n="cat_rotolo_carta">🧻 Rotolo di carta casa</option>
+          <option value="Pulizia Casa" data-i18n="cat_sacchetti">🗑️ Sacchetti Spazzatura</option>
+          <option value="Pulizia Casa" data-i18n="cat_spray">🧴 Flacone spray / Sgrassatore</option>
+          <option value="Pulizia Casa" data-i18n="cat_detersivo_lavatrice">🧺 Detersivo lavatrice</option>
+          <option value="Pulizia Casa" data-i18n="cat_ammorbidente">🧴 Ammorbidente</option>
+          <option value="Pulizia Casa" data-i18n="cat_scopa">🧹 Scopa / Mocio</option>
+        </optgroup>
+
+        <optgroup label="🧴 Igiene Personale" data-i18n-label="group_igiene_personale">
+          <option value="Igiene Personale" data-i18n="cat_igiene_generico">🧴 Igiene Personale (Generico)</option>
+          <option value="Igiene Personale" data-i18n="cat_spazzolino">🪥 Spazzolino da denti</option>
+          <option value="Igiene Personale" data-i18n="cat_cerotti">🩹 Cerotti</option>
+          <option value="Igiene Personale" data-i18n="cat_carta_igiene">🧻 Carta igienica</option>
+          <option value="Igiene Personale" data-i18n="cat_bagnoschiuma">🧼 Bagnoschiuma</option>
+          <option value="Igiene Personale" data-i18n="cat_shampoo">🧴 Shampoo / Balsamo</option>
+          <option value="Igiene Personale" data-i18n="cat_rasoi">🪒 Rasoi / Schiuma da barba</option>
+          <option value="Igiene Personale" data-i18n="cat_dentifricio">🦷 Dentifricio</option>
+          <option value="Igiene Personale" data-i18n="cat_sapone_mani">🧼 Sapone mani</option>
+          <option value="Igiene Personale" data-i18n="cat_assorbenti">🧓 Assorbenti / Fazzoletti</option>
+        </optgroup>
+
+        <optgroup label="📦 Altro e Casa" data-i18n-label="group_altro_casa">
+          <option value="Altro" data-i18n="cat_altro_generico">📦 Altro (Generico)</option>
+          <option value="Altro" data-i18n="cat_pile">🔋 Pile / Batterie</option>
+          <option value="Altro" data-i18n="cat_candela">🕯️ Candela</option>
+          <option value="Altro" data-i18n="cat_animali">🐾 Cibo per animali</option>
+          <option value="Altro" data-i18n="cat_lampadina">💡 Lampadina</option>
+          <option value="Altro" data-i18n="cat_piante">🪴 Piante / Fiori</option>
+          <option value="Altro" data-i18n="cat_alluminio">🧻 Pellicola / Alluminio</option>
+          <option value="Altro" data-i18n="cat_ghiaccio">🧊 Ghiaccio</option>
+        </optgroup>
+
+      </select>
+    </div>
+    <button class="btn-add" id="btn-aggiungi" onclick="aggiungiProdotto()" data-i18n="btn_aggiungi">Aggiungi Prodotto</button>
+</div>
+
+  <div id="status"></div>
+
+  <div class="card">
+    <h2 data-i18n="titolo_prodotti">📋 Prodotti</h2>
+    <div class="counter" id="counter"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="th_nome">Nome</th>
+            <th data-i18n="th_qta">Q.tà</th>
+            <th data-i18n="th_ubicazione">Ubicazione</th>
+            <th data-i18n="th_azioni">Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="tabella-prodotti">
+          <tr class="empty-row">
+            <td colspan="4">
+              <span class="spinner"></span> 
+              <span data-i18n="caricamento">Caricamento…</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="install-banner">
+  <p data-i18n="banner_install">📲 Installa l'app sul tuo dispositivo</p>
+  <button id="btn-install" data-i18n="btn_installa">Installa</button>
+  <button id="dismiss-install">✕</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+  apiKey: "AIzaSyC7rDHDMv9gBFFP7wzQivt-PyuRb02oO2k",
+  authDomain: "listaspesasonia.firebaseapp.com",
+  databaseURL: "https://listaspesasonia-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "listaspesasonia",
+  storageBucket: "listaspesasonia.firebasestorage.app",
+  messagingSenderId: "612289112825",
+  appId: "1:612289112825:web:18cf2508bbd59cdd551028"
+};
+firebase.initializeApp(firebaseConfig);
+</script>
+
+<!-- CARICHIAMO PRIMA LE TRADUZIONI E POI IL FILE APP.JS -->
+<script>
+const traduzioni = {
+  it: {
+    titolo_principale: "🛒 Lista Spesa",
+    sottotitolo: "Famiglia · sincronizzata in tempo reale",
+    benvenuto: "Benvenuto!",
+    descrizione_login: "Accedi con il tuo account Google per entrare nella lista di famiglia",
+    btn_login_google: "Accedi con Google",
+    esci: "Esci",
+    nuovo_prodotto: "➕ Nuovo prodotto",
+    label_nome: "Nome prodotto",
+    placeholder_nome: "es. Latte, Pasta…",
+    label_quantita: "Quantità",
+    label_ubicazione: "📍 Dove lo compri / Dove si trova?",
+    scegli_posto: "Scegli un posto...",
+    posto_casa: "Casa (Generico)",
+    posto_dispensa: "Dispensa",
+    posto_frigo: "Frigo",
+    label_categoria: "Categoria",
+    btn_aggiungi: "Aggiungi Prodotto",
+    titolo_prodotti: "📋 Prodotti",
+    th_nome: "Nome",
+    th_qta: "Q.tà",
+    th_ubicazione: "Ubicazione",
+    th_azioni: "Azioni",
+    caricamento: "Caricamento…",
+    banner_install: "📲 Installa l'app sul tuo dispositivo",
+    btn_installa: "Installa",
+    opt_supermercati: "Supermercati",
+    opt_incasa: "In Casa",
+    group_frutta_verdura: "🥦 Frutta e Verdura",
+    group_carne_pesce: "🥩 Carne e Pesce",
+    group_latticini_uova: "🧀 Latticini e Uova",
+    group_pane_pasta_dispensa: "🍞 Pane, Pasta e Dispensa",
+    group_bevande: "🥤 Bevande",
+    group_pulizia_casa: "🧹 Pulizia Casa",
+    group_igiene_personale: "🧴 Igiene Personale",
+    group_altro_casa: "📦 Altro e Casa",
+
+    // Traduzioni pulsanti dinamici e stati tabella
+    btn_spunta: "Fatto",
+    btn_elimina: "Elimina",
+    stato_acquistato: "acquistati",
+    messaggio_vuoto: "Nessun prodotto da comprare",
+    conferma_elimina: "Eliminare questo prodotto?",
+
+    // Traduzioni categorie e opzioni menu
+    cat_frutta_generico: "🥦 Frutta e Verdura (Generico)",
+    cat_pomodoro: "🍅 Pomodori",
+    cat_carota: "🥕 Carote",
+    cat_banana: "🍌 Banane",
+    cat_mela_rossa: "🍎 Mele rosse",
+    cat_mela_verde: "🍏 Mele verdi",
+    cat_fragola: "🍓 Fragole",
+    cat_limone: "🍋 Limone",
+    cat_patata: "🥔 Patate",
+    cat_insalata: "🥗 Insalata / Lattuga",
+    cat_cipolla: "🧅 Cipolla",
+    cat_aglio: "🧄 Aglio",
+    cat_arancia: "🍊 Arancia",
+    cat_pesca: "🍑 Pesche",
+    cat_anguria: "🍉 Anguria",
+    cat_broccolo: "🥦 Broccolo",
+    cat_fungo: "🍄 Fungo",
+    cat_avocado: "🥑 Avocado",
+    cat_uva: "🍇 Uva",
+    cat_ciliegia: "🍒 Ciliege",
+    cat_carne_pesce_generico: "🥩 Carne e Pesce (Generico)",
+    cat_pollo: "🍗 Coscia di pollo",
+    cat_bistecca: "🥩 Bistecca di manzo",
+    cat_bacon: "🥓 Bacon / Pancetta",
+    cat_pesce_fresco: "🐟 Pesce fresco",
+    cat_gamberetti: "🍤 Gamberetti",
+    cat_hamburger: "🍔 Hamburger",
+    cat_salsiccia: "🌭 Salsiccia",
+    cat_sushi: "🍣 Sushi",
+    cat_costine: "🍖 Costine",
+    cat_tonno: "🥫 Tonno in scatola",
+    cat_latticini_generico: "🧀 Latticini (Generico)",
+    cat_latte: "🥛 Latte",
+    cat_burro: "🧈 Burro",
+    cat_uova: "🥚 Uova",
+    cat_gelato: "🍦 Gelato",
+    cat_parmigiano: "🧀 Formaggio grattugiato",
+    cat_mozzarella: "🥛 Mozzarella",
+    cat_yogurt: "🍧 Yogurt",
+    cat_panna: "🧁 Panna",
+    cat_pane_dolci_generico: "🍞 Pane e Dolci (Generico)",
+    cat_baguette: "🥖 Baguette / Filoncino",
+    cat_croissant: "🥐 Croissant / Cornetto",
+    cat_pasta: "🍝 Pasta / Spaghetti",
+    cat_riso: "🍚 Riso",
+    cat_pizza: "🍕 Pizza",
+    cat_biscotti: "🍪 Biscotti",
+    cat_torta: "🍰 Fetta di torta",
+    cat_ciambella: "🍩 Ciambella",
+    cat_pane_cassetta: "🍞 Pane in cassetta",
+    cat_cereali: "🥣 Cereali",
+    cat_sale: "🧂 Sale",
+    cat_miele: "🍯 Miele",
+    cat_zucchero: "🪵 Zucchero",
+    cat_olio: "🍾 Olio d'oliva",
+    cat_pomodoro_passata: "🥫 Passata di pomodoro",
+    cat_patatine: "🥔 Patatine / Snack",
+    cat_bevande_generico: "🥤 Bevande (Generico)",
+    cat_acqua: "💧 Acqua minerale",
+    cat_caffe: "☕ Caffè",
+    cat_succo: "🧃 Succo / Estathé",
+    cat_birra: "🍺 Birra",
+    cat_vino: "🍷 Vino",
+    cat_cola: "🥤 Coca Cola / Fanta",
+    cat_te: "🍵 Tè / Infusi",
+    cat_spumante: "🍾 Spumante",
+    cat_pulizia_generico: "🧹 Pulizia Casa (Generico)",
+    cat_spugna: "🧽 Spugna",
+    cat_sapone_piatti: "🧼 Sapone piatti",
+    cat_rotolo_carta: "🧻 Rotolo di carta casa",
+    cat_sacchetti: "🗑️ Sacchetti Spazzatura",
+    cat_spray: "🧴 Flacone spray / Sgrassatore",
+    cat_detersivo_lavatrice: "🧺 Detersivo lavatrice",
+    cat_ammorbidente: "🧴 Ammorbidente",
+    cat_scopa: "🧹 Scopa / Mocio",
+    cat_igiene_generico: "🧴 Igiene Personale (Generico)",
+    cat_spazzolino: "🪥 Spazzolino da denti",
+    cat_cerotti: "🩹 Cerotti",
+    cat_carta_igiene: "🧻 Carta igienica",
+    cat_bagnoschiuma: "🧼 Bagnoschiuma",
+    cat_shampoo: "🧴 Shampoo / Balsamo",
+    cat_rasoi: "🪒 Rasoi / Schiuma da barba",
+    cat_dentifricio: "🦷 Dentifricio",
+    cat_sapone_mani: "🧼 Sapone mani",
+    cat_assorbenti: "🧓 Assorbenti / Fazzoletti",
+    cat_altro_generico: "📦 Altro (Generico)",
+    cat_pile: "🔋 Pile / Batterie",
+    cat_candela: "🕯️ Candela",
+    cat_animali: "🐾 Cibo per animali",
+    cat_lampadina: "💡 Lampadina",
+    cat_piante: "🪴 Piante / Fiori",
+    cat_alluminio: "🧻 Pellicola / Alluminio",
+    cat_ghiaccio: "🧊 Ghiaccio"
+  },
+  pl: {
+    titolo_principale: "🛒 Lista Zakupów",
+    sottotitolo: "Rodzina · synchronizacja w czasie rzeczywistym",
+    benvenuto: "Witaj!",
+    descrizione_login: "Zaloguj się na konto Google, aby dołączyć do listy rodzinnej",
+    btn_login_google: "Zaloguj się przez Google",
+    esci: "Wyloguj",
+    nuovo_prodotto: "➕ Nowy produkt",
+    label_nome: "Nazwa produktu",
+    placeholder_nome: "np. Mleko, Makaron...",
+    label_quantita: "Ilość",
+    label_ubicazione: "📍 Gdzie kupujesz / Gdzie to jest?",
+    scegli_posto: "Wybierz lokalizację...",
+    posto_casa: "Dom (Ogólne)",
+    posto_dispensa: "Spiżarnia",
+    posto_frigo: "Lodówka",
+    label_categoria: "Kategoria",
+    btn_aggiungi: "Dodaj Produkt",
+    titolo_prodotti: "📋 Produkty",
+    th_nome: "Nazwa",
+    th_qta: "Ilość",
+    th_ubicazione: "Sklep/Pokój",
+    th_azioni: "Akcje",
+    caricamento: "Ładowanie…",
+    banner_install: "📲 Zainstaluj aplikację na swoim urządzeniu",
+    btn_installa: "Instaluj",
+    opt_supermercati: "Supermarkety",
+    opt_incasa: "W Domu",
+    group_frutta_verdura: "🥦 Owoce i Warzywa",
+    group_carne_pesce: "🥩 Mięso i Ryby",
+    group_latticini_uova: "🧀 Nabiał i Jajka",
+    group_pane_pasta_dispensa: "🍞 Pieczywo i Produkty Sypkie",
+    group_bevande: "🥤 Napoje",
+    group_pulizia_casa: "🧹 Sprzątanie Domu",
+    group_igiene_personale: "🧴 Higiena Osobista",
+    group_altro_casa: "📦 Inne",
+
+    // Traduzioni pulsanti dinamici e stati tabella
+    btn_spunta: "Kupione",
+    btn_elimina: "Usuń",
+    stato_acquistato: "kupione",
+    messaggio_vuoto: "Brak produktów do kupienia",
+    conferma_elimina: "Czy chcesz usunąć ten produkt?",
+
+    // Traduzioni categorie e opzioni menu in polacco
+    cat_frutta_generico: "🥦 Owoce i Warzywa (Ogólne)",
+    cat_pomodoro: "🍅 Pomidory",
+    cat_carota: "🥕 Marchewki",
+    cat_banana: "🍌 Banane",
+    cat_mela_rossa: "🍎 Czerwone jabłka",
+    cat_mela_verde: "🍏 Zielone jabłka",
+    cat_fragola: "🍓 Truskawki",
+    cat_limone: "🍋 Cytryna",
+    cat_patata: "🥔 Ziemniaki",
+    cat_insalata: "🥗 Sałata",
+    cat_cipolla: "🧅 Cebula",
+    cat_aglio: "🧄 Czosnek",
+    cat_arancia: "🍊 Pomarańcza",
+    cat_pesca: "🍑 Brzoskwinie",
+    cat_anguria: "🍉 Arbuz",
+    cat_broccolo: "🥦 Brokuły",
+    cat_fungo: "🍄 Grzyby",
+    cat_avocado: "🥑 Awokado",
+    cat_uva: "🍇 Winogrona",
+    cat_ciliegia: "🍒 Czereśnie",
+    cat_carne_pesce_generico: "🥩 Mięso i Ryby (Ogólne)",
+    cat_pollo: "🍗 Udko z kurczaka",
+    cat_bistecca: "🥩 Stek wołowy",
+    cat_bacon: "🥓 Boczek",
+    cat_pesce_fresco: "🐟 Świeża ryba",
+    cat_gamberetti: "🍤 Krewetki",
+    cat_hamburger: "🍔 Hamburger",
+    cat_salsiccia: "🌭 Kiełbasa",
+    cat_sushi: "🍣 Sushi",
+    cat_costine: "🍖 Żeberka",
+    cat_tonno: "🥫 Tuńczyk w puszce",
+    cat_latticini_generico: "🧀 Nabiał (Ogólne)",
+    cat_latte: "🥛 Mleko",
+    cat_burro: "🧈 Masło",
+    cat_uova: "🥚 Jajka",
+    cat_gelato: "🍦 Lody",
+    cat_parmigiano: "🧀 Tarty ser",
+    cat_mozzarella: "🥛 Mozzarella",
+    cat_yogurt: "🍧 Jogurt",
+    cat_panna: "🧁 Śmietana",
+    cat_pane_dolci_generico: "🍞 Pieczywo i Słodycze (Ogólne)",
+    cat_baguette: "🥖 Bagietka",
+    cat_croissant: "🥐 Rogalik / Croissant",
+    cat_pasta: "🍝 Makaron / Spaghetti",
+    cat_riso: "🍚 Ryż",
+    cat_pizza: "🍕 Pizza",
+    cat_biscotti: "🍪 Ciastka",
+    cat_torta: "🍰 Kawałek ciasta",
+    cat_ciambella: "🍩 Pączek",
+    cat_pane_cassetta: "🍞 Chleb tostowy",
+    cat_cereali: "🥣 Płatki śniadaniowe",
+    cat_sale: "🧂 Sól",
+    cat_miele: "🍯 Miód",
+    cat_zucchero: "🪵 Cukier",
+    cat_olio: "🍾 Oliwa z oliwek",
+    cat_pomodoro_passata: "🥫 Przecier pomidorowy",
+    cat_patatine: "🥔 Chipsy / Przekąski",
+    cat_bevande_generico: "🥤 Napoje (Ogólne)",
+    cat_acqua: "💧 Woda mineralna",
+    cat_caffe: "☕ Kawa",
+    cat_succo: "🧃 Sok / Ice Tea",
+    cat_birra: "🍺 Piwo",
+    cat_vino: "🍷 Wino",
+    cat_cola: "🥤 Coca Cola / Fanta",
+    cat_te: "🍵 Herbata / Napary",
+    cat_spumante: "🍾 Szampan",
+    cat_pulizia_generico: "🧹 Środki czystości (Ogólne)",
+    cat_spugna: "🧽 Gąbka",
+    cat_sapone_piatti: "🧼 Płyn do naczyń",
+    cat_rotolo_carta: "🧻 Ręcznik papierowy",
+    cat_sacchetti: "🗑️ Worki na śmieci",
+    cat_spray: "🧴 Spray do czyszczenia / Sgrassatore",
+    cat_detersivo_lavatrice: "🧺 Proszek do prania",
+    cat_ammorbidente: "🧴 Płyn do płukania",
+    cat_scopa: "🧹 Miotła / Mop",
+    cat_igiene_generico: "🧴 Higiena Osobista (Ogólne)",
+    cat_spazzolino: "🪥 Szczoteczka do zębów",
+    cat_cerotti: "🩹 Plastry",
+    cat_carta_igiene: "🧻 Papier toaletowy",
+    cat_bagnoschiuma: "🧼 Żel pod prysznic",
+    cat_shampoo: "🧴 Szampon / Odżywka",
+    cat_rasoi: "🪒 Maszynki / Pianka do golenia",
+    cat_dentifricio: "🦷 Pasta do zębów",
+    cat_sapone_mani: "🧼 Mydło do rąk",
+    cat_assorbenti: "🧓 Podpaski / Chusteczki",
+    cat_altro_generico: "📦 Inne artykuły (Ogólne)",
+    cat_pile: "🔋 Baterie",
+    cat_candela: "🕯️ Świeca",
+    cat_animali: "🐾 Karma dla zwierząt",
+    cat_lampadina: "💡 Żarówka",
+    cat_piante: "🪴 Rośliny / Kwiaty",
+    cat_alluminio: "🧻 Folia aluminiowa",
+    cat_ghiaccio: "🧊 Lód"
+  }
+};
+
+function impostaLingua(lingua) {
+  // Salva la scelta dell'utente locale
+  localStorage.setItem('lingua_selezionata', lingua);
+
+  // 1. Traduce elementi con l'attributo data-i18n (testo semplice)
+  document.querySelectorAll('[data-i18n]').forEach(elemento => {
+    const chiave = elemento.getAttribute('data-i18n');
+    if (traduzioni[lingua] && traduzioni[lingua][chiave]) {
+      elemento.textContent = traduzioni[lingua][chiave];
+    }
+  });
+
+  // 2. Traduce le etichette degli optgroup (i raggruppamenti del select)
+  document.querySelectorAll('[data-i18n-label]').forEach(elemento => {
+    const chiave = elemento.getAttribute('data-i18n-label');
+    if (traduzioni[lingua] && traduzioni[lingua][chiave]) {
+      elemento.setAttribute('label', traduzioni[lingua][chiave]);
+    }
+  });
+
+  // 3. Gestione speciale per i Placeholder degli input
+  const inputNome = document.getElementById('nome');
+  if (inputNome && traduzioni[lingua]['placeholder_nome']) {
+    inputNome.placeholder = traduzioni[lingua]['placeholder_nome'];
+  }
+}
+
+// Avvio automatico ed aggancio eventi
+document.addEventListener('DOMContentLoaded', () => {
+  const linguaSalvata = localStorage.getItem('lingua_selezionata') || 'it';
+  
+  const selettore = document.getElementById('language-select');
+  if (selettore) {
+    selettore.value = linguaSalvata;
+    
+    // Aggiorna la lingua quando l'utente la seleziona
+    selettore.addEventListener('change', (e) => {
+      impostaLingua(e.target.value);
+    });
+  }
+  
+  // Applica la lingua
+  impostaLingua(linguaSalvata);
+});
+</script>
+
+<!-- CARICHIAMO IL FILE APP.JS SOLO ORA CHE TUTTE LE VARIABILI DELLE LINGUE SONO PRONTE -->
+<script src="app.js"></script>
+
+<script>
+  // Script aggiornato per ripulire correttamente il nome del prodotto
+  document.getElementById('categoria').addEventListener('change', function() {
+    const testoSelezionato = this.options[this.selectedIndex].text;
+    
+    // Non copiare se è un valore generico
+    if (testoSelezionato && !testoSelezionato.includes('(Generico)') && !testoSelezionato.includes('(Ogólne)')) {
+      const nomePulito = testoSelezionato.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '').trim();
+      document.getElementById('nome').value = nomePulito;
+    }
+  });
+</script>
+</body>
+</html>
