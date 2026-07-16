@@ -1,5 +1,6 @@
 const EMAIL_AUTORIZZATE = [
     "pietro.procopio@gmail.com"
+    "r70440485@gmail.com"
 ];
 
 const auth = firebase.auth();
